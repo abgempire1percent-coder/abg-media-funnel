@@ -401,7 +401,7 @@ src="https://www.facebook.com/tr?id=1777767609913535&ev=PageView&noscript=1"
         <h2>Perfect. You're exactly who we help.</h2>
         <p>Based on your answers, you've got the revenue, crew capacity, and challenge profile our exclusive-appointment model was built for. Next: a 30-minute strategy call — free, no pitch — to map out fit and pipeline before anything else.</p>
         <div class="btn-row">
-          <button class="btn btn-primary" onclick="goTo('contact')">Book Your Call</button>
+          <button class="btn btn-primary" onclick="bookNext()">Book Your Call</button>
         </div>
       </div>
     </div>
@@ -517,10 +517,10 @@ src="https://www.facebook.com/tr?id=1777767609913535&ev=PageView&noscript=1"
 <script>
 (function(){
   "use strict";
-  if(window.self !== window.top && /[?&]step=booking/.test(window.location.search)){
-    try{ window.top.goTo('booking'); }catch(e){}
-    document.documentElement.style.display = 'none';
-    return;
+  if(window.self !== window.top){
+    var handedOff = false;
+    try{ window.top.surveyComplete(); handedOff = true; }catch(e){}
+    if(handedOff){ document.documentElement.style.display = 'none'; return; }
   }
   function trackMeta(event, params){ if(window.fbq){ fbq('track', event, params || {}); } }
   var STEPS = [ {key:'hero', label:'See Fit'}, {key:'survey', label:'Qualify'}, {key:'contact', label:'Details'}, {key:'booking', label:'Book'}, {key:'thankyou', label:'Confirm'} ];
@@ -606,6 +606,14 @@ src="https://www.facebook.com/tr?id=1777767609913535&ev=PageView&noscript=1"
   var SURVEY_URL = 'https://api.leadconnectorhq.com/widget/survey/bKRUYZZprkPKOIUuHrBh?notrack=true';
   var surveyLoaded = false;
   var surveyLeadSent = false;
+  window.surveyComplete = function(){
+    goTo('survey');
+    document.getElementById('ghl-survey').hidden = true;
+    document.getElementById('result-dq').hidden = true;
+    document.getElementById('result-qualified').hidden = false;
+    if(!surveyLeadSent){ surveyLeadSent = true; trackMeta('SubmitApplication'); trackMeta('Lead'); }
+  };
+  window.bookNext = function(){ goTo(SURVEY_URL ? 'booking' : 'contact'); };
   function showResultView(){
     if(SURVEY_URL){
       document.getElementById('survey-questions').hidden = true;
