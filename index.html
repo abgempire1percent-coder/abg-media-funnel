@@ -374,6 +374,12 @@ src="https://www.facebook.com/tr?id=1777767609913535&ev=PageView&noscript=1"
   <div class="center-stage">
     <div class="stage-wrap">
       <a href="#" class="back-link" id="survey-back">← Back</a>
+      <div id="ghl-survey" hidden>
+        <p class="eyebrow">Quick qualification</p>
+        <h2 style="font-size:clamp(1.5rem,2.6vw,1.9rem); font-weight:600; margin:10px 0 18px;">Answer 6 quick questions</h2>
+        <div class="booking-embed"><iframe id="ghl-survey-frame" title="ABG Média qualification survey" style="width:100%; height:760px; border:none; display:block;"></iframe></div>
+        <div class="btn-row" style="margin-top:16px;"><button class="btn btn-ghost" onclick="goTo('booking')">I've finished the survey — Book my call →</button></div>
+      </div>
       <div id="survey-questions">
         <div class="progress-head">
           <span class="eyebrow" id="q-count">Question 1 / 6</span>
@@ -511,6 +517,11 @@ src="https://www.facebook.com/tr?id=1777767609913535&ev=PageView&noscript=1"
 <script>
 (function(){
   "use strict";
+  if(window.self !== window.top && /[?&]step=booking/.test(window.location.search)){
+    try{ window.top.goTo('booking'); }catch(e){}
+    document.documentElement.style.display = 'none';
+    return;
+  }
   function trackMeta(event, params){ if(window.fbq){ fbq('track', event, params || {}); } }
   var STEPS = [ {key:'hero', label:'See Fit'}, {key:'survey', label:'Qualify'}, {key:'contact', label:'Details'}, {key:'booking', label:'Book'}, {key:'thankyou', label:'Confirm'} ];
   var railEl = document.getElementById('rail');
@@ -538,6 +549,7 @@ src="https://www.facebook.com/tr?id=1777767609913535&ev=PageView&noscript=1"
     window.scrollTo({top:0, behavior:'auto'});
     if(key === 'survey'){ showResultView(); }
     if(mapKey === 'thankyou'){ trackMeta('Schedule'); }
+    if(mapKey === 'booking' && SURVEY_URL && !surveyLeadSent){ surveyLeadSent = true; trackMeta('SubmitApplication'); trackMeta('Lead'); }
   }
   window.goTo = goTo;
   if(window.location.hash === '#thankyou'){ goTo('thankyou'); }
@@ -591,7 +603,18 @@ src="https://www.facebook.com/tr?id=1777767609913535&ev=PageView&noscript=1"
     if(qualified){ trackMeta('SubmitApplication'); }
     showResultView();
   }
+  var SURVEY_URL = 'https://api.leadconnectorhq.com/widget/survey/Mw3SxWxWFwUKZKXqBykQ';
+  var surveyLoaded = false;
+  var surveyLeadSent = false;
   function showResultView(){
+    if(SURVEY_URL){
+      document.getElementById('survey-questions').hidden = true;
+      document.getElementById('result-dq').hidden = true;
+      document.getElementById('result-qualified').hidden = true;
+      document.getElementById('ghl-survey').hidden = false;
+      if(!surveyLoaded){ document.getElementById('ghl-survey-frame').src = SURVEY_URL; surveyLoaded = true; }
+      return;
+    }
     if(!surveyDone){ document.getElementById('survey-questions').hidden = false; document.getElementById('result-dq').hidden = true; document.getElementById('result-qualified').hidden = true; return; }
     document.getElementById('survey-questions').hidden = true;
     document.getElementById('result-dq').hidden = qualified;
@@ -607,11 +630,19 @@ src="https://www.facebook.com/tr?id=1777767609913535&ev=PageView&noscript=1"
     e.preventDefault();
     var data = new FormData(contactForm);
     leadInfo = { name: (data.get('name') || '').trim(), email: (data.get('email') || '').trim(), phone: (data.get('phone') || '').trim(), website: (data.get('website') || '').trim() };
-    if(LEAD_WEBHOOK_URL){ fetch(LEAD_WEBHOOK_URL, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(leadInfo) }).catch(function(){}); }
     trackMeta('Lead', { em: leadInfo.email, ph: leadInfo.phone });
     var nameParts = leadInfo.name.split(/\s+/);
     var firstName = nameParts.shift() || '';
     var lastName = nameParts.join(' ');
+    if(LEAD_WEBHOOK_URL){
+      var payload = {
+        first_name: firstName, last_name: lastName, email: leadInfo.email, phone: leadInfo.phone, website: leadInfo.website,
+        service_type: answers.service || '', monthly_revenue: answers.revenue || '', biggest_challenge: answers.challenge || '',
+        crews: answers.crews || '', lead_platforms: (answers.platforms || []).join(', '), decision_maker: answers.decision || '',
+        qualified: qualified ? 'yes' : 'no', source: 'Landing Page - GitHub Pages'
+      };
+      fetch(LEAD_WEBHOOK_URL, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload), keepalive: true }).catch(function(){});
+    }
     var params = new URLSearchParams({ first_name: firstName, last_name: lastName, email: leadInfo.email, phone: leadInfo.phone });
     var baseUrl = 'https://api.leadconnectorhq.com/widget/booking/xbJ96c7pNvcowOu5qy0C';
     var prefilledUrl = baseUrl + '?' + params.toString();
