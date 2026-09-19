@@ -378,7 +378,6 @@ src="https://www.facebook.com/tr?id=1777767609913535&ev=PageView&noscript=1"
         <p class="eyebrow">Quick qualification</p>
         <h2 style="font-size:clamp(1.5rem,2.6vw,1.9rem); font-weight:600; margin:10px 0 18px;">Answer 6 quick questions</h2>
         <div class="booking-embed"><iframe id="ghl-survey-frame" title="ABG Média qualification survey" style="width:100%; height:760px; border:none; display:block;"></iframe></div>
-        <div class="btn-row" style="margin-top:16px;"><button class="btn btn-ghost" onclick="goTo('booking')">I've finished the survey — Book my call →</button></div>
       </div>
       <div id="survey-questions">
         <div class="progress-head">
@@ -443,7 +442,7 @@ src="https://www.facebook.com/tr?id=1777767609913535&ev=PageView&noscript=1"
 <main id="step-booking" hidden>
   <div class="center-stage">
     <div class="stage-wrap" style="max-width:640px;">
-      <a href="#" class="back-link" onclick="goTo('contact'); return false;">← Back</a>
+      <a href="#" class="back-link" id="booking-back" onclick="goTo('contact'); return false;">← Back</a>
       <div class="booking-head">
         <span class="result-badge good" id="qualified-badge" hidden>You're qualified</span>
         <p class="eyebrow" id="booking-eyebrow">Step 4 of 5</p>
@@ -454,9 +453,6 @@ src="https://www.facebook.com/tr?id=1777767609913535&ev=PageView&noscript=1"
         <iframe id="booking-iframe" class="booking-iframe-el" src="https://api.leadconnectorhq.com/widget/booking/xbJ96c7pNvcowOu5qy0C" scrolling="yes" title="Book your strategy call with ABG Média"></iframe>
       </div>
       <p class="booking-fallback">Calendar not loading? <a id="booking-fallback-link" href="https://api.leadconnectorhq.com/widget/booking/xbJ96c7pNvcowOu5qy0C" target="_blank" rel="noopener">Open scheduling in a new tab ↗</a></p>
-      <div class="btn-row">
-        <button class="btn btn-ghost" onclick="goTo('thankyou')">I've Booked My Call →</button>
-      </div>
       <div class="booking-meta">
         <div class="booking-meta-item"><svg viewBox="0 0 24 24" fill="none"><path d="M12 8v4l3 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/></svg>30 minutes</div>
         <div class="booking-meta-item"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2 3 6v6c0 5 4 8.5 9 10 5-1.5 9-5 9-10V6l-9-4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>Free — no cost, no obligation</div>
@@ -520,7 +516,10 @@ src="https://www.facebook.com/tr?id=1777767609913535&ev=PageView&noscript=1"
   "use strict";
   if(window.self !== window.top){
     var handedOff = false;
-    try{ window.top.surveyComplete(); handedOff = true; }catch(e){}
+    try{
+      if(/[?&]step=thankyou/.test(window.location.search)){ window.top.goTo('thankyou'); } else { window.top.surveyComplete(); }
+      handedOff = true;
+    }catch(e){}
     if(handedOff){ document.documentElement.style.display = 'none'; return; }
   }
   function trackMeta(event, params){ if(window.fbq){ fbq('track', event, params || {}); } }
@@ -553,7 +552,7 @@ src="https://www.facebook.com/tr?id=1777767609913535&ev=PageView&noscript=1"
     if(mapKey === 'booking' && SURVEY_URL && !surveyLeadSent){ surveyLeadSent = true; trackMeta('SubmitApplication'); trackMeta('Lead'); }
   }
   window.goTo = goTo;
-  if(window.location.hash === '#thankyou'){ goTo('thankyou'); }
+  if(window.location.hash === '#thankyou' || (window.self === window.top && /[?&]step=thankyou/.test(window.location.search))){ goTo('thankyou'); }
   document.getElementById('survey-back').addEventListener('click', function(e){
     e.preventDefault();
     if(currentQ > 0 && !surveyDone){ currentQ--; renderQuestion(); } else { goTo('hero'); }
@@ -610,6 +609,7 @@ src="https://www.facebook.com/tr?id=1777767609913535&ev=PageView&noscript=1"
   window.surveyComplete = function(){
     goTo('booking');
     document.getElementById('qualified-badge').hidden = false;
+    document.getElementById('booking-back').hidden = true;
     document.getElementById('booking-eyebrow').hidden = true;
     document.getElementById('booking-title').textContent = "You're qualified — book your 30-minute call";
     document.getElementById('booking-sub').textContent = 'Pick a time that works for you below. 30 minutes, free, no pitch.';
