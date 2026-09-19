@@ -445,9 +445,10 @@ src="https://www.facebook.com/tr?id=1777767609913535&ev=PageView&noscript=1"
     <div class="stage-wrap" style="max-width:640px;">
       <a href="#" class="back-link" onclick="goTo('contact'); return false;">← Back</a>
       <div class="booking-head">
-        <p class="eyebrow">Step 4 of 5</p>
-        <h2>Book your strategy call</h2>
-        <p>30 minutes. Free. No pitch. We show you how we'd fill your calendar with exclusive, qualified appointments.</p>
+        <span class="result-badge good" id="qualified-badge" hidden>You're qualified</span>
+        <p class="eyebrow" id="booking-eyebrow">Step 4 of 5</p>
+        <h2 id="booking-title">Book your strategy call</h2>
+        <p id="booking-sub">30 minutes. Free. No pitch. We show you how we'd fill your calendar with exclusive, qualified appointments.</p>
       </div>
       <div class="booking-embed">
         <iframe id="booking-iframe" class="booking-iframe-el" src="https://api.leadconnectorhq.com/widget/booking/xbJ96c7pNvcowOu5qy0C" scrolling="yes" title="Book your strategy call with ABG Média"></iframe>
@@ -607,10 +608,11 @@ src="https://www.facebook.com/tr?id=1777767609913535&ev=PageView&noscript=1"
   var surveyLoaded = false;
   var surveyLeadSent = false;
   window.surveyComplete = function(){
-    goTo('survey');
-    document.getElementById('ghl-survey').hidden = true;
-    document.getElementById('result-dq').hidden = true;
-    document.getElementById('result-qualified').hidden = false;
+    goTo('booking');
+    document.getElementById('qualified-badge').hidden = false;
+    document.getElementById('booking-eyebrow').hidden = true;
+    document.getElementById('booking-title').textContent = "You're qualified — book your 30-minute call";
+    document.getElementById('booking-sub').textContent = 'Pick a time that works for you below. 30 minutes, free, no pitch.';
     if(!surveyLeadSent){ surveyLeadSent = true; trackMeta('SubmitApplication'); trackMeta('Lead'); }
   };
   window.bookNext = function(){ goTo(SURVEY_URL ? 'booking' : 'contact'); };
@@ -629,6 +631,7 @@ src="https://www.facebook.com/tr?id=1777767609913535&ev=PageView&noscript=1"
     document.getElementById('result-qualified').hidden = !qualified;
   }
   renderQuestion();
+  if(window.self === window.top && SURVEY_URL && /[?&]step=booking/.test(window.location.search)){ window.surveyComplete(); }
   var LEAD_WEBHOOK_URL = '';
   var leadInfo = {};
   var contactForm = document.getElementById('contact-form');
